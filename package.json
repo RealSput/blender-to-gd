@@ -7,7 +7,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RealSput/blender-to-gd.git"
+  },
+  "author": "RealSput",
+  "bugs": {
+    "url": "https://github.com/RealSput/blender-to-gd/issues"
+  },
+  "homepage": "https://github.com/RealSput/blender-to-gd",
   "license": "ISC",
   "dependencies": {
     "@cliffhanger-js/cliffhanger": "^1.1.7",
