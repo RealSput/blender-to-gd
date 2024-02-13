@@ -3,6 +3,11 @@
 
 NOTE: if you are using a portable version or have not installed Blender to C:\Program Files (x86), set the BLENDER_DIR environment to your own custom path (e.g. run "set BLENDER_DIR=P:\blender-4.0.2-windows-x64" in cmd.exe)
 
+# Installation
+```
+npm i -g blender-to-gd
+```
+
 # Usage
 ```
 Usage: blender-to-gd [options]
