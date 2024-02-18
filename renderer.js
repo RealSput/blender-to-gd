@@ -44,12 +44,15 @@ let invis_color = unknown_c();
 invis_color.set(rgba(0, 0, 0, 0), 0, true);
 
 let colors_u, frame_delay;
+let cull_op = false;
+let intensity_op = 1;
 
 let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_pos, fid, light_pos, scale) => {
     material = stripUnneededStatements(material, ['Ns', 'Ke', 'Ni'])
 
     let objsf = [];
     const $obj = new OBJFile(str).parse().models[0];
+	faces_am = $obj.faces.length;
     const $mtl = new MTLFile(material).parse();
     let ggroups = {};
     let curr_vert = 0;
@@ -67,7 +70,7 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
     }
 
     const vertex = (x, y) => {
-		x /= scale; y /= scale;
+        x /= scale; y /= scale;
         if (add || !old_pos) {
             const gr = unknown_g();
             ggroups[curr_vert] = [gr, x, y];
@@ -85,7 +88,7 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
         let real_diff = [x - old_pos[curr_vert][1], y - old_pos[curr_vert][2]]
         let diff = [real_diff[0] + offset_x, real_diff[1] + offset_y]
         ggroups[curr_vert] = [old_pos[curr_vert][0], x, y];
-        old_pos[curr_vert][0].move(...diff, frame_delay, NONE, 2, 1, 1, false, false);
+		old_pos[curr_vert][0].move(...diff, frame_delay, NONE, 2, 1, 1, false, false);
         curr_vert++;
         return old_pos[curr_vert - 1][0];
     };
@@ -120,7 +123,7 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
         y: light_pos[1],
         z: light_pos[2]
     });
-    const calcBgrForNormal = (normal) => Math.min(1, Math.max(0, dot(normal, vertexToLight)));
+    const calcBgrForNormal = (normal, intensity) => Math.min(1, Math.max(0, dot(normal, vertexToLight) * intensity));
 
     const centerPos = {
         x: 200,
@@ -134,11 +137,13 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
     }
 
     let verticesLight = {};
+    let vertexNormals = {};
     for (let i = 0; i < $obj.vertexNormals.length; i++) {
         const normal = $obj.vertexNormals[i];
         if (!normal) continue;
 
-        verticesLight[i] = calcBgrForNormal(normal);
+        verticesLight[i] = calcBgrForNormal(normal, intensity_op);
+		vertexNormals[i] = normal;
     }
 
     let asf = [];
@@ -149,27 +154,36 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
         const l1 = verticesLight[vs[0].vertexNormalIndex - 1];
         const l2 = verticesLight[vs[1].vertexNormalIndex - 1];
         const l3 = verticesLight[vs[2].vertexNormalIndex - 1];
-        
+		
         const v1 = vertexToGid[vs[0].vertexIndex];
         const v2 = vertexToGid[vs[1].vertexIndex];
         const v3 = vertexToGid[vs[2].vertexIndex];
-
-        // There can be faces with 5 or more vertices. It's better to triangulate the meshes through blender instead.
-
+		
+		const cameraPosition = { x: 0, y: 0, z: -5 };
+		
+		const culled = cull_op ? dot(normalize({
+			x: ($obj.vertices[vs[1].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) * ($obj.vertices[vs[2].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z) - ($obj.vertices[vs[1].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z) * ($obj.vertices[vs[2].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y),
+			y: ($obj.vertices[vs[1].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z) * ($obj.vertices[vs[2].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x) - ($obj.vertices[vs[1].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x) * ($obj.vertices[vs[2].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z),
+			z: ($obj.vertices[vs[1].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x) * ($obj.vertices[vs[2].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) - ($obj.vertices[vs[1].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) * ($obj.vertices[vs[2].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x)
+		}), {
+			x: $obj.vertices[vs[0].vertexIndex - 1].x - cameraPosition.x,
+			y: $obj.vertices[vs[0].vertexIndex - 1].y - cameraPosition.y,
+			z: $obj.vertices[vs[0].vertexIndex - 1].z - cameraPosition.z
+		}) < 0 : false;
         let depth = avr($obj.vertices[vs[0].vertexIndex - 1].z, $obj.vertices[vs[1].vertexIndex - 1].z, $obj.vertices[vs[2].vertexIndex - 1].z);
 
-        asf.push({vs: [v3, v1, v2], depth, c1: black_color, c2: face_color, bgr: l1, blending: false}, {vs: [v1, v2, v3], depth, c1: black_color, c2: face_color, bgr: l2, blending: true}, {vs: [v2, v3, v1], depth, c1: black_color, c2: face_color, bgr: l3, blending: true});
+        asf.push({vs: [v3, v1, v2], depth, c1: black_color, c2: face_color, bgr: l1, blending: false, culled}, {vs: [v1, v2, v3], depth, c1: black_color, c2: face_color, bgr: l2, blending: true, culled}, {vs: [v2, v3, v1], depth, c1: black_color, c2: face_color, bgr: l3, blending: true, culled});
     }
 
     asf = asf.sort((a, b) => a.depth - b.depth);
 
-    let lrs = 8;
-    let lre = 11;
+    let lrs = 0;
+    let lre = 13;
     asf = divideArray(asf, lre - lrs);
     let layer = lrs;
     for (let a of asf) {
         for (let f of a) {
-            tri(f.vs[0], f.vs[1], f.vs[2], f.c1, f.bgr, layer, f.c2, f.blending);
+            if (!f.culled) tri(f.vs[0], f.vs[1], f.vs[2], f.c1, f.bgr, layer, f.c2, f.blending);
         }
         layer++;
     }
@@ -189,6 +203,8 @@ module.exports = async (config) => {
 	let loop = config.loop ?? true; // whether animation should loop forever or not
 	let fps = config.fps ?? 24; // frames per sec
 	let scale = config.scale ?? 1;
+	cull_op = config.cull_faces ?? cull_op
+	intensity_op = config.intensity ?? intensity_op
 	// configuration end
 	
 	frame_delay = fpsToSeconds(fps);
