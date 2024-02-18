@@ -3,19 +3,19 @@
 
 NOTE: if you are using a portable version or have not installed Blender to C:\Program Files (x86), set the BLENDER_DIR environment to your own custom path (e.g. run "set BLENDER_DIR=P:\blender-4.0.2-windows-x64" in cmd.exe)
 
-# Installation
-```
-npm i -g blender-to-gd
-```
-
 # Usage
 ```
+blender-to-gd (version 1.0) 
+3D engine that converts Blender scenes to Geometry Dash levels w/ gradient triggers 
+
 Usage: blender-to-gd [options]
 Options:
---lock: Locks to player X
---loop: Loops animation forever
---fps <frames_per_second> (short: -f): Loops animation forever
---scaling <scale> (short: -s): Scale of animation (anim / scaling)
---output_level <level_name> (short: -o): Output level
---input <blender_file> (short: -i): Input Blender file
+--lock : Locks to player X
+--backface_culling (short: -b): Applies backface culling to scene (experimental)
+--loop : Loops animation forever
+--fps (short: -f): Sets FPS of scene (default: 24, only change if your Blender scene has a different framerate than 24 FPS)
+--intensity : Intensity of light source
+--scaling (short: -s): Scale of animation (anim / scaling)
+--output_level (short: -o): Output level
+--input (short: -i): Input Blender file
 ```
