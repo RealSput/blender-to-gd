@@ -1,3 +1,4 @@
+const colors = require('@colors/colors/safe');
 const render = require('./renderer');
 const cp = require('child_process');
 const crypto = require('crypto');
@@ -5,13 +6,21 @@ const path = require('path');
 const fs = require('fs');
 
 const baseDirectory = process.env.BLENDER_DIR ?? 'C:\\Program Files\\Blender Foundation';
+let exts;
+if (!fs.existsSync(baseDirectory)) {
+    console.log(colors.red(`ERROR: Directory "${baseDirectory}" could not be found while searching for Blender installation! Make sure you have Blender installed, you have changed the BLENDER_DIR environment variable to the correct path or you are on a Windows system.`))
+    process.exit(1);
+}
 const directories = !process.env.BLENDER_DIR ? fs.readdirSync(baseDirectory, {withFileTypes: true}).filter((entry) => entry.isDirectory()).map((entry) => path.join(baseDirectory, entry.name)) : baseDirectory;
 
 let blender_path = !process.env.BLENDER_DIR ? directories[0] : directories
 let exec = path.join(blender_path, "blender.exe");
 
 console.log(`Using Blender located at "${exec}" (change BLENDER_DIR environment variable to use Blender located in another directory)`)
-
+if (!fs.existsSync(exec)) {
+    colors.red(`ERROR: Blender executable located at ${exec} was not found! Please change the BLENDER_DIR environment variable to where your Blender installation is located.`);
+    process.exit(1);
+}
 let scr = (temp_dir, output) => `import json
 import bpy
 import os
@@ -100,6 +109,14 @@ module.exports = (cwd) => ({
             description: "Locks to player X",
             init: () => config.lock = true
         },
+        backface_culling: {
+			short: "-b",
+            description: "Applies backface culling to scene (experimental)",
+            init: () => {
+				console.log(colors.yellow('WARNING: Backface culling is experimental and may result in visual glitches'));
+				config.cull_faces = true;
+			}
+        },
         loop: {
             description: "Loops animation forever",
             init: () => config.loop = true
@@ -107,8 +124,13 @@ module.exports = (cwd) => ({
         fps: {
             short: "-f",
             amount_of_args: 1,
-            description: "Loops animation forever",
+            description: "Sets FPS of scene (default: 24, only change if your Blender scene has a different framerate than 24 FPS)",
             init: (fps) => config.fps = fps
+        },
+		intensity: {
+            amount_of_args: 1,
+            description: "Intensity of light source",
+            init: (intensity) => config.intensity = intensity
         },
         scaling: {
             short: "-s",
@@ -138,14 +160,31 @@ module.exports = (cwd) => ({
                 let tscript = `script_${tid}.py`;
                 fs.writeFileSync(tscript, script_cont);
                 console.log('INFO: Gathering animation data... (1/2)')
-                let cmd = `"${exec}" -b ${arg} -P ${tscript}`;
-                cp.spawnSync(cmd, {shell: true});
-                fs.unlinkSync(tscript);
-                fs.rmSync(tdir, {recursive: true});
-                config.file_name = tname;
-                console.log('INFO: Rendering and writing to savefile... (2/2)')
-                await render(config);
-                fs.unlinkSync(tname);
+                let cmd = `"${exec}" -b "${
+                    path.join(process.cwd(), arg)
+                }" -P ${tscript}`;
+                cp.exec(cmd, async (err, res) => {
+                    if (err) {
+                        console.log(colors.red(`ERROR: Blender has exited with error code ${
+                            err.code
+                        }, message:\n\n${res}`))
+                        fs.unlinkSync(tscript);
+                        fs.rmSync(tdir, {recursive: true});
+                        process.exit(err.code)
+                    }
+                    if (!fs.existsSync(tname)) {
+                        console.log(colors.red(`ERROR: Blender has closed unexpectedly and the script has not run.`));
+                        fs.unlinkSync(tscript);
+                        fs.rmSync(tdir, {recursive: true});
+                        process.exit(1);
+                    }
+                    fs.unlinkSync(tscript);
+                    fs.rmSync(tdir, {recursive: true});
+                    config.file_name = tname;
+                    console.log('INFO: Rendering and writing to savefile... (2/2)')
+                    await render(config);
+                    fs.unlinkSync(tname);
+                });
             }
         }
     }
