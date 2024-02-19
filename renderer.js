@@ -57,7 +57,7 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
     let ggroups = {};
     let curr_vert = 0;
     let ord = -1000;
-    let grad_id = -10000;
+    let grad_id = -50000;
     if (!colors_u) {
         colors_u = {}
 
@@ -159,17 +159,9 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
         const v2 = vertexToGid[vs[1].vertexIndex];
         const v3 = vertexToGid[vs[2].vertexIndex];
 		
-		const cameraPosition = { x: 0, y: 0, z: -5 };
-		
-		const culled = cull_op ? dot(normalize({
-			x: ($obj.vertices[vs[1].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) * ($obj.vertices[vs[2].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z) - ($obj.vertices[vs[1].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z) * ($obj.vertices[vs[2].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y),
-			y: ($obj.vertices[vs[1].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z) * ($obj.vertices[vs[2].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x) - ($obj.vertices[vs[1].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x) * ($obj.vertices[vs[2].vertexIndex - 1].z - $obj.vertices[vs[0].vertexIndex - 1].z),
-			z: ($obj.vertices[vs[1].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x) * ($obj.vertices[vs[2].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) - ($obj.vertices[vs[1].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) * ($obj.vertices[vs[2].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x)
-		}), {
-			x: $obj.vertices[vs[0].vertexIndex - 1].x - cameraPosition.x,
-			y: $obj.vertices[vs[0].vertexIndex - 1].y - cameraPosition.y,
-			z: $obj.vertices[vs[0].vertexIndex - 1].z - cameraPosition.z
-		}) < 0 : false;
+		const cameraPosition = { x: 0, y: 0, z: -50 };
+		const culled = cull_op ? (($obj.vertices[vs[1].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x) * ($obj.vertices[vs[2].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) - ($obj.vertices[vs[1].vertexIndex - 1].y - $obj.vertices[vs[0].vertexIndex - 1].y) * ($obj.vertices[vs[2].vertexIndex - 1].x - $obj.vertices[vs[0].vertexIndex - 1].x)) < 0 : false;
+
         let depth = avr($obj.vertices[vs[0].vertexIndex - 1].z, $obj.vertices[vs[1].vertexIndex - 1].z, $obj.vertices[vs[2].vertexIndex - 1].z);
 
         asf.push({vs: [v3, v1, v2], depth, c1: black_color, c2: face_color, bgr: l1, blending: false, culled}, {vs: [v1, v2, v3], depth, c1: black_color, c2: face_color, bgr: l2, blending: true, culled}, {vs: [v2, v3, v1], depth, c1: black_color, c2: face_color, bgr: l3, blending: true, culled});
