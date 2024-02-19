@@ -128,9 +128,10 @@ module.exports = (cwd) => ({
             init: (fps) => config.fps = fps
         },
 		intensity: {
+			short: "-p",
             amount_of_args: 1,
             description: "Intensity of light source",
-            init: (intensity) => config.intensity = intensity
+            init: (intst) => config.intensity = intst
         },
         scaling: {
             short: "-s",
