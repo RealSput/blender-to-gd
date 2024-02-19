@@ -11,7 +11,9 @@ if (!fs.existsSync(baseDirectory)) {
     console.log(colors.red(`ERROR: Directory "${baseDirectory}" could not be found while searching for Blender installation! Make sure you have Blender installed, you have changed the BLENDER_DIR environment variable to the correct path or you are on a Windows system.`))
     process.exit(1);
 }
-const directories = !process.env.BLENDER_DIR ? fs.readdirSync(baseDirectory, {withFileTypes: true}).filter((entry) => entry.isDirectory()).map((entry) => path.join(baseDirectory, entry.name)) : baseDirectory;
+const directories = !process.env.BLENDER_DIR ? fs.readdirSync(baseDirectory, {
+    withFileTypes: true
+}).filter((entry) => entry.isDirectory()).map((entry) => path.join(baseDirectory, entry.name)) : baseDirectory;
 
 let blender_path = !process.env.BLENDER_DIR ? directories[0] : directories
 let exec = path.join(blender_path, "blender.exe");
@@ -110,12 +112,12 @@ module.exports = (cwd) => ({
             init: () => config.lock = true
         },
         backface_culling: {
-			short: "-b",
+            short: "-b",
             description: "Applies backface culling to scene (experimental)",
             init: () => {
-				console.log(colors.yellow('WARNING: Backface culling is experimental and may result in visual glitches'));
-				config.cull_faces = true;
-			}
+                console.log(colors.yellow('WARNING: Backface culling is experimental and may result in visual glitches'));
+                config.cull_faces = true;
+            }
         },
         loop: {
             description: "Loops animation forever",
@@ -127,8 +129,8 @@ module.exports = (cwd) => ({
             description: "Sets FPS of scene (default: 24, only change if your Blender scene has a different framerate than 24 FPS)",
             init: (fps) => config.fps = fps
         },
-		intensity: {
-			short: "-p",
+        intensity: {
+            short: "-p",
             amount_of_args: 1,
             description: "Intensity of light source",
             init: (intst) => config.intensity = intst
@@ -170,17 +172,23 @@ module.exports = (cwd) => ({
                             err.code
                         }, message:\n\n${res}`))
                         fs.unlinkSync(tscript);
-                        fs.rmSync(tdir, {recursive: true});
+                        fs.rmSync(tdir, {
+                            recursive: true
+                        });
                         process.exit(err.code)
                     }
                     if (!fs.existsSync(tname)) {
                         console.log(colors.red(`ERROR: Blender has closed unexpectedly and the script has not run.`));
                         fs.unlinkSync(tscript);
-                        fs.rmSync(tdir, {recursive: true});
+                        fs.rmSync(tdir, {
+                            recursive: true
+                        });
                         process.exit(1);
                     }
                     fs.unlinkSync(tscript);
-                    fs.rmSync(tdir, {recursive: true});
+                    fs.rmSync(tdir, {
+                        recursive: true
+                    });
                     config.file_name = tname;
                     console.log('INFO: Rendering and writing to savefile... (2/2)')
                     await render(config);
