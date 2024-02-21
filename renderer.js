@@ -88,7 +88,7 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
         let real_diff = [x - old_pos[curr_vert][1], y - old_pos[curr_vert][2]]
         let diff = [real_diff[0] + offset_x, real_diff[1] + offset_y]
         ggroups[curr_vert] = [old_pos[curr_vert][0], x, y];
-		old_pos[curr_vert][0].move(...diff, frame_delay, NONE, 2, 1, 1, false, false);
+		if (real_diff[0] || real_diff[1]) old_pos[curr_vert][0].move(...diff, frame_delay, NONE, 2, 1, 1, false, false);
         curr_vert++;
         return old_pos[curr_vert - 1][0];
     };
@@ -127,7 +127,7 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
 
     const centerPos = {
         x: 200,
-        y: 150
+        y: 390
     };
     let vertexToGid = {};
 
@@ -165,7 +165,7 @@ let obj_to_grad = (material, str, offset_x = 0, offset_y = 0, add = true, old_po
         let depth = avr($obj.vertices[vs[0].vertexIndex - 1].z, $obj.vertices[vs[1].vertexIndex - 1].z, $obj.vertices[vs[2].vertexIndex - 1].z);
 
         asf.push({vs: [v3, v1, v2], depth, c1: black_color, c2: face_color, bgr: l1, blending: false, culled}, {vs: [v1, v2, v3], depth, c1: black_color, c2: face_color, bgr: l2, blending: true, culled}, {vs: [v2, v3, v1], depth, c1: black_color, c2: face_color, bgr: l3, blending: true, culled});
-    }
+	}
 
     asf = asf.sort((a, b) => a.depth - b.depth);
 
