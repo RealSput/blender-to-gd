@@ -12,9 +12,10 @@ Usage: blender-to-gd [options]
 Options:
 --lock : Locks to player X
 --backface_culling (short: -b): Applies backface culling to scene (experimental)
+--textures (short: -t): Renders textures to level (experimental)
 --loop : Loops animation forever
 --fps (short: -f): Sets FPS of scene (default: 24, only change if your Blender scene has a different framerate than 24 FPS)
---intensity : Intensity of light source
+--intensity (short: -p): Intensity of light source
 --scaling (short: -s): Scale of animation (anim / scaling)
 --output_level (short: -o): Output level
 --input (short: -i): Input Blender file
